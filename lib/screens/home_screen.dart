@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:weather_app/screens/forecast_screen.dart';
 import 'package:weather_app/services/weather_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,6 +33,56 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       print(e);
     }
+  }
+
+  void _showCitySelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Enter City Name"),
+          content: TypeAheadField(
+            suggestionsCallback: (pattern) async {
+              return await _weatherService.fetchCitySuggestions(pattern);
+            },
+            builder: (context, controller, focusNode) {
+              return TextField(
+                controller: controller,
+                focusNode: focusNode,
+                decoration: InputDecoration(
+                  hintText: "City Name",
+                  border: OutlineInputBorder(),
+                  labelText: "City",
+                ),
+              );
+            },
+            itemBuilder: (context, suggestion) {
+              return ListTile(title: Text(suggestion['name']));
+            },
+            onSelected: (city) {
+              setState(() {
+                _city = city['name'];
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _fetchWeather();
+              },
+              child: Text("OK"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Cancel"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -74,13 +126,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(
                   height: 10,
                 ),
-                Text(_city,
-                    style: GoogleFonts.lato(
-                      fontSize: 36,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    )),
-                SizedBox(height: 10),
+                InkWell(
+                  onTap: _showCitySelectionDialog,
+                  child: Text(_city,
+                      style: GoogleFonts.inter(
+                        fontSize: 24,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      )),
+                ),
+                SizedBox(height: 30),
                 Center(
                     child: Column(children: [
                   Image.network(
@@ -90,38 +145,37 @@ class _HomeScreenState extends State<HomeScreen> {
                     fit: BoxFit.cover,
                   ),
                   Text("${_currentWeather!['current']['temp_c'].round()} °C",
-                      style: GoogleFonts.lato(
-                        fontSize: 40,
+                      style: GoogleFonts.inter(
+                        fontSize: 48,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       )),
                   Text("${_currentWeather!['current']["condition"]['text']}",
-                      style: GoogleFonts.lato(
-                        fontSize: 40,
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
                       )),
-                  SizedBox(height: 10),
+                  SizedBox(height: 15),
                   Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         Text(
                             "Max: ${_currentWeather!["forecast"]["forecastday"][0]["day"]["maxtemp_c"].round()} °C",
-                            style: GoogleFonts.lato(
+                            style: GoogleFonts.inter(
                               fontSize: 22,
                               color: Colors.white70,
                               fontWeight: FontWeight.bold,
                             )),
                         Text(
                             "Min: ${_currentWeather!["forecast"]["forecastday"][0]["day"]["mintemp_c"].round()} °C",
-                            style: GoogleFonts.lato(
+                            style: GoogleFonts.inter(
                               fontSize: 22,
                               color: Colors.white70,
                               fontWeight: FontWeight.bold,
                             ))
                       ]),
                 ])),
-                SizedBox(height: 45),
+                SizedBox(height: 60),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -137,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ['sunset']),
                   ],
                 ),
-                SizedBox(height: 45),
+                SizedBox(height: 60),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -147,13 +201,25 @@ class _HomeScreenState extends State<HomeScreen> {
                         _currentWeather!['current']['wind_kph']),
                   ],
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: 40),
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-                      //Navigator.push(context, MaterialPageRoute(builder: (context) => ForecastScreen()));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  ForecastScreen(city: _city)));
                     },
-                    child: Text("Next 7 days Forecast"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF1A2344),
+                    ),
+                    child: Text("Next 7 days Forecast",
+                        style: GoogleFonts.inter(
+                          fontSize: 20,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        )),
                   ),
                 ),
               ]),
@@ -189,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(height: 8),
                 Text(
                   Label,
-                  style: GoogleFonts.lato(
+                  style: GoogleFonts.inter(
                     fontSize: 18,
                     color: Colors.white70,
                     fontWeight: FontWeight.bold,
@@ -198,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(height: 8),
                 Text(
                   value is String ? value : value.toString(),
-                  style: GoogleFonts.lato(
+                  style: GoogleFonts.inter(
                     fontSize: 18,
                     color: Colors.white70,
                   ),
